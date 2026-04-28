@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Улыбнись 😄</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: url("bg.jpg") no-repeat center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial;
+}
+
+.box {
+    background: rgba(0,0,0,0.6);
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    color: white;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    background: #22c55e;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h1>Привет 😄</h1>
+    <p>Можешь, пожалуйста, улыбнуться?</p>
+    <button onclick="start()">Ок</button>
+    <p id="result"></p>
+</div>
+
+<video id="video" autoplay style="display:none;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+async function start() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+
+        await new Promise(resolve => {
+            video.onloadedmetadata = () => {
+                resolve();
+            };
+        });
+
+        const canvas = document.getElementById('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0);
+
+        const img = canvas.toDataURL("image/png");
+
+        const res = await fetch('http://127.0.0.1:5000/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ img })
+        });
+
+        console.log(await res.text());
+
+        document.getElementById("result").innerText =
+            "Фото сохранено";
+
+    } catch (e) {
+        console.error(e);
+        alert("Ошибка камеры или запроса");
+    }
+}
+</script>
+
+</body>
+</html>
